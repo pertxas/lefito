@@ -1,0 +1,1 @@
+Contiene las dependencias de librerías externas de nuestro proyecto.
