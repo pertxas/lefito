@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-from .api import Parameters, connect_tor, testip, menuppal
+from api import Parameters, connect_tor, testip, menuppal
 import argparse
 
 # --------------------------------------------------------------------------
