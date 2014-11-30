@@ -171,7 +171,7 @@ def menupayloads(dirname):
     for payload in listapayloads:
         print "[%i] %s" % (n, payload)
         n += 1
-        print "[q] Salir"
+    print "[q] Salir"
     try:
         select = int(raw_input("elige: "))
         payloadseleccionado = listapayloads[select]
