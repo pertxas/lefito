@@ -4,7 +4,7 @@ import argparse
 
 # --------------------------------------------------------------------------
 if __name__ == '__main__':
-    intell={}
+    intell = {}
     parser = argparse.ArgumentParser(description="lefito hace cositas de lfi")
     parser.add_argument("-u", dest="url", help="target url")
     parser.add_argument("-p", dest="payloads", help="payloads file")
