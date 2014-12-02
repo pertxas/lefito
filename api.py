@@ -25,9 +25,9 @@ def connect_tor():
 
 # --------------------------------------------------------------------------
 def testip(params):
-    msg = dorequest('http://echoip.com', params)
+    req = dorequest('http://echoip.com', params)
     out = Displayer()
-    out.display(msg)
+    out.display(str(req['body']))
 
 
 # --------------------------------------------------------------------------
