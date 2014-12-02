@@ -1,11 +1,12 @@
 # -*- coding: utf-8 -*-
 import socks
 import socket
-import mechanize
 import re
-from urlparse import urlparse
+import urllib.request
+import urlparse3
 import difflib
 import os
+
 
 # --------------------------------------------------------------------------
 def create_connection(address, timeout=None, source_address=None):
@@ -24,19 +25,21 @@ def connect_tor():
 
 # --------------------------------------------------------------------------
 def testip(params):
-    print dorequest('http://echoip.com', params)
+    msg = dorequest('http://echoip.com', params)
+    out = Displayer()
+    out.display(msg)
 
 
 # --------------------------------------------------------------------------
 def dorequest(url, params):
-    req = mechanize.Request(url)
+    req = urllib.request.Request(url)
     if params.agent is not None:
         req.add_header("User-agent", params.agent)
     else:
         req.add_header("User-agent", "Soy el lefito.")
     result = {}
     try:
-        respuesta = mechanize.urlopen(req)
+        respuesta = urllib.request.urlopen(req)
         result['body'] = respuesta.read()
         result['head'] = respuesta.info()
     except:
@@ -61,38 +64,39 @@ def menuppal(intell, params):
 
 # --------------------------------------------------------------------------
 def showmenuppal():
-    print "[0] Init Intelligence"
-    print "[1] Start Recogn"
-    print "[q] Quit"
-    choice = str(raw_input("Select:"))
+    print("[0] Init Intelligence")
+    print("[1] Start Recogn")
+    print("[q] Quit")
+    choice = str(input("Select:"))
     return choice
 
 
 # --------------------------------------------------------------------------
 def initintell(intell, params):
+    out = Displayer()
     if params.url is not None:
         intell['target'] = params.url
     else:
-        intell['target'] = str(raw_input("url: "))
+        intell['target'] = str(input("url: "))
     originalreq = dorequest(intell['target'], params)
     intell['originalreq_lines'] = originalreq['body'].splitlines()
     intell['originalhead'] = originalreq['head']
-    print originalreq['head']
+    out.display(originalreq['head'])
     intell['originalsess'] = getsess(originalreq['head'])
-    intell['parsedurl'] = urlparse(intell['target'])
+    intell['parsedurl'] = urlparse3.parse_url(intell['target'])
     intell['parametros'] = intell['parsedurl'].query.split('&')
 
 
 # --------------------------------------------------------------------------
 def startrecogn(intell, params):
     if params.payloads is not None:
-        pause = raw_input("Pause? [y/n]")
+        pause = input("Pause? [y/n]")
         payloadslist = readpayloads(params.payloads)
         attack(intell, payloadslist, pause, params)
     else:
         selectedpayloadlist = menupayloads('./payloads')
         while selectedpayloadlist != 'q':
-            pause = raw_input("Pause? [y/n]")
+            pause = input("Pause? [y/n]")
             payloadslist = readpayloads(selectedpayloadlist)
             attack(intell, payloadslist, pause, params)
             selectedpayloadlist = menupayloads('./payloads')
@@ -101,11 +105,12 @@ def startrecogn(intell, params):
 
 # --------------------------------------------------------------------------
 def getsess(info):
+    out = Displayer()
     if 'set-cookie' in info:
-        print info['set-cookie']
+        out.display(info['set-cookie'])
         m = re.search("(PHPSESSID=(?P<value>.*);)", info['set-cookie'])
         if m:
-            print m.group('value')
+            out.display(m.group('value'))
             return m.group('value')
         else:
             return ''
@@ -123,28 +128,29 @@ def readpayloads(fname):
 
 # --------------------------------------------------------------------------
 def attack(intell, payloadslist, pause, params):
+    out = Displayer()
     for parametro in intell['parametros']:
         urls = genurls(payloadslist, parametro, intell)
         for url in urls:
-            print '-' * len(url)
-            print url
-            print '-' * len(url)
+            out.display('-' * len(url))
+            out.display(url)
+            out.display('-' * len(url))
             req = "%s://%s%s?%s" % (intell['parsedurl'].scheme,
                                     intell['parsedurl'].netloc,
                                     intell['parsedurl'].path,
                                     url)
             result = dorequest(req, params)
             result_lines = result['body'].splitlines()
-            d = difflib.Differ()
+            difflib.Differ()
             diff = difflib.unified_diff(intell['originalreq_lines'], result_lines)
             for line in diff:
                 if line.startswith('+'):
                     line = line.strip("+ ")
                     line = cleanhtml(line)
                     if len(line) > 1:
-                        print line
+                        out.display(line)
             if pause == 'y':
-                cont = raw_input('press enter to continue (q+enter to quit)')
+                cont = input('press enter to continue (q+enter to quit)')
                 if cont == 'q':
                     return True
 
@@ -154,12 +160,12 @@ def genurls(payloadslist, parametro, intell):
     valores = parametro.split('=')
     resultado = []
     for payload in payloadslist:
-        str = payload.replace("[FOO]", valores[0])
-        str = str.replace("[BAR]", valores[1])
-        str = str.replace("[SESS]", intell['originalsess'])
-        str = str.replace("[HOST]", intell['parsedurl'].netloc)
-        str = str.replace("[STHOST]", intell['parsedurl'].netloc.replace("www.", ""))
-        resultado.append(str)
+        cadena = payload.replace("[FOO]", valores[0])
+        cadena = cadena.replace("[BAR]", valores[1])
+        cadena = cadena.replace("[SESS]", intell['originalsess'])
+        cadena = cadena.replace("[HOST]", intell['parsedurl'].netloc)
+        cadena = cadena.replace("[STHOST]", intell['parsedurl'].netloc.replace("www.", ""))
+        resultado.append(cadena)
     return resultado
 
 
@@ -169,11 +175,11 @@ def menupayloads(dirname):
     n = 0
     listapayloads.sort()
     for payload in listapayloads:
-        print "[%i] %s" % (n, payload)
+        print("[%i] %s" % (n, payload))
         n += 1
-    print "[q] Salir"
+    print("[q] Salir")
     try:
-        select = int(raw_input("elige: "))
+        select = int(input("elige: "))
         payloadseleccionado = listapayloads[select]
         return dirname + '/' + payloadseleccionado
     except:
@@ -197,3 +203,55 @@ class Parameters:
         self.tor = kwargs.get("tor")
         self.checkip = kwargs.get("checkip")
         self.agent = kwargs.get("agent")
+
+
+# -------------------------------------------------------------------------
+class Displayer:
+    """Output system"""
+    instance = None
+
+    # ---------------------------------------------------------------------
+    def __new__(cls, *args, **kwargs):
+        if cls.instance is None:
+            cls.instance = object.__new__(cls, *args, **kwargs)
+            cls.__initialized = False
+        return cls.instance
+
+    # ---------------------------------------------------------------------
+    def config(self, **kwargs):
+        self.out_file = kwargs.get("out_file", None)
+        self.out_screen = kwargs.get("out_screen", True)
+        self.verbosity = kwargs.get("verbosity", 0)
+        if self.out_file:
+            self.out_file_handler = open(self.out_file, "w")
+
+    # ---------------------------------------------------------------------
+    def display(self, message):
+        if self.verbosity > 0:
+            self.__display(message)
+
+    # ---------------------------------------------------------------------
+    def display_verbosity(self, message):
+        if self.verbosity > 1:
+            self.__display(message)
+
+    # ---------------------------------------------------------------------
+    def display_more_verbosity(self, message):
+        if self.verbosity > 2:
+            self.__display(message)
+
+    # ---------------------------------------------------------------------
+    def __display(self, message):
+        if self.out_screen:
+            print(message)
+        if self.out_file_handler:
+            self.out_file_handler.write(message)
+
+    # ---------------------------------------------------------------------
+    def __init__(self):
+        if not self.__initialized:
+            self.__initialized = True
+            self.out_file = None
+            self.out_file_handler = None
+            self.out_screen = True
+            self.verbosity = 0

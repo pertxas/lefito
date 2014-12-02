@@ -1,1 +1,1 @@
-mechanize
+urlparse3 PySocks
