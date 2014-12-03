@@ -25,9 +25,15 @@ def connect_tor():
 
 # --------------------------------------------------------------------------
 def testip(params):
-    req = dorequest('http://echoip.com', params)
+    url = 'http://www.leaky.org/ip_tester.pl'
+    #url = 'http://echoip.com'
+    req = dorequest(url, params)
     out = Displayer()
-    out.display(str(req['body']))
+    for line in req['body'].splitlines():
+        line = line.decode('utf-8')
+        out.display_verbosity(line)
+        if line.startswith('<p>Your') or line.startswith('The conn'):
+            out.display(cleanhtml(line))
 
 
 # --------------------------------------------------------------------------

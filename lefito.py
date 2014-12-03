@@ -27,4 +27,4 @@ if __name__ == '__main__':
         connect_tor()
     if params.checkip is not None:
         testip(input_parameters)
-    #menuppal(intell, input_parameters)
+    menuppal(intell, input_parameters)
