@@ -1,10 +1,9 @@
 # -*- coding: utf-8 -*-
-from api import Parameters, Displayer, connect_tor, testip, menuppal
+from api import Parameters, Displayer, IntellCollector, connect_tor, testip, menuppal
 import argparse
 
 # --------------------------------------------------------------------------
 if __name__ == '__main__':
-    intell = {}
     parser = argparse.ArgumentParser(description="lefito hace cositas de lfi")
     parser.add_argument("-u", dest="url", help="target url")
     parser.add_argument("-p", dest="payloads", help="payloads file")
@@ -23,8 +22,9 @@ if __name__ == '__main__':
     d.config(out_screen=True,
              out_file=params.file,
              verbosity=1)
+    i = IntellCollector()
     if params.tor is not None:
         connect_tor()
     if params.checkip is not None:
         testip(input_parameters)
-    menuppal(intell, input_parameters)
+    menuppal(input_parameters)

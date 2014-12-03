@@ -3,7 +3,7 @@ import socks
 import socket
 import re
 import urllib.request
-import urlparse3
+from urllib.parse import urlparse
 import difflib
 import os
 
@@ -57,13 +57,16 @@ def dorequest(url, params):
 
 
 # --------------------------------------------------------------------------
-def menuppal(intell, params):
+def menuppal(params):
+    intell = IntellCollector()
     choice = showmenuppal()
     while choice != "q":
         if choice == "0":
-            initintell(intell, params)
+            intell.gather(params)
         elif choice == "1":
-            startrecogn(intell, params)
+            intell.show()
+        elif choice == "2":
+            startrecogn(params)
         choice = showmenuppal()
     return True
 
@@ -71,40 +74,24 @@ def menuppal(intell, params):
 # --------------------------------------------------------------------------
 def showmenuppal():
     print("[0] Init Intelligence")
-    print("[1] Start Recogn")
+    print("[1] Show Intelligence")
+    print("[2] Start Recogn")
     print("[q] Quit")
     choice = str(input("Select:"))
     return choice
 
-
 # --------------------------------------------------------------------------
-def initintell(intell, params):
-    out = Displayer()
-    if params.url is not None:
-        intell['target'] = params.url
-    else:
-        intell['target'] = str(input("url: "))
-    originalreq = dorequest(intell['target'], params)
-    intell['originalreq_lines'] = originalreq['body'].splitlines()
-    intell['originalhead'] = originalreq['head']
-    out.display(originalreq['head'])
-    intell['originalsess'] = getsess(originalreq['head'])
-    intell['parsedurl'] = urlparse3.parse_url(intell['target'])
-    intell['parametros'] = intell['parsedurl'].query.split('&')
-
-
-# --------------------------------------------------------------------------
-def startrecogn(intell, params):
+def startrecogn(params):
     if params.payloads is not None:
         pause = input("Pause? [y/n]")
         payloadslist = readpayloads(params.payloads)
-        attack(intell, payloadslist, pause, params)
+        attack(payloadslist, pause, params)
     else:
         selectedpayloadlist = menupayloads('./payloads')
         while selectedpayloadlist != 'q':
             pause = input("Pause? [y/n]")
             payloadslist = readpayloads(selectedpayloadlist)
-            attack(intell, payloadslist, pause, params)
+            attack(payloadslist, pause, params)
             selectedpayloadlist = menupayloads('./payloads')
     return True
 
@@ -133,22 +120,23 @@ def readpayloads(fname):
 
 
 # --------------------------------------------------------------------------
-def attack(intell, payloadslist, pause, params):
+def attack(payloadslist, pause, params):
+    intell = IntellCollector()
     out = Displayer()
-    for parametro in intell['parametros']:
-        urls = genurls(payloadslist, parametro, intell)
+    for parametro in intell.parametros:
+        urls = genurls(payloadslist, parametro)
         for url in urls:
             out.display('-' * len(url))
             out.display(url)
             out.display('-' * len(url))
-            req = "%s://%s%s?%s" % (intell['parsedurl'].scheme,
-                                    intell['parsedurl'].netloc,
-                                    intell['parsedurl'].path,
+            req = "%s://%s%s?%s" % (intell.parsedurl.scheme,
+                                    intell.parsedurl.netloc,
+                                    intell.parsedurl.path,
                                     url)
             result = dorequest(req, params)
-            result_lines = result['body'].splitlines()
+            result_lines = [x.decode(intell.charset) for x in result['body'].splitlines()]
             difflib.Differ()
-            diff = difflib.unified_diff(intell['originalreq_lines'], result_lines)
+            diff = difflib.unified_diff(intell.originalreq_lines, result_lines)
             for line in diff:
                 if line.startswith('+'):
                     line = line.strip("+ ")
@@ -162,15 +150,16 @@ def attack(intell, payloadslist, pause, params):
 
 
 # --------------------------------------------------------------------------
-def genurls(payloadslist, parametro, intell):
+def genurls(payloadslist, parametro):
+    intell = IntellCollector()
     valores = parametro.split('=')
     resultado = []
     for payload in payloadslist:
         cadena = payload.replace("[FOO]", valores[0])
         cadena = cadena.replace("[BAR]", valores[1])
-        cadena = cadena.replace("[SESS]", intell['originalsess'])
-        cadena = cadena.replace("[HOST]", intell['parsedurl'].netloc)
-        cadena = cadena.replace("[STHOST]", intell['parsedurl'].netloc.replace("www.", ""))
+        cadena = cadena.replace("[SESS]", intell.originalsess)
+        cadena = cadena.replace("[HOST]", intell.parsedurl.netloc)
+        cadena = cadena.replace("[STHOST]", intell.parsedurl.netloc.replace("www.", ""))
         resultado.append(cadena)
     return resultado
 
@@ -261,3 +250,61 @@ class Displayer:
             self.out_file_handler = None
             self.out_screen = True
             self.verbosity = 0
+
+
+# -------------------------------------------------------------------------
+class IntellCollector:
+    """gathered data container"""
+    instance = None
+
+    # ---------------------------------------------------------------------
+    def __new__(cls, *args, **kwargs):
+        if cls.instance is None:
+            cls.instance = object.__new__(cls, *args, **kwargs)
+            cls.__initialized = False
+        return cls.instance
+
+    # ---------------------------------------------------------------------
+    def config(self, **kwargs):
+        self.target = kwargs.get("target", None)
+
+    # ---------------------------------------------------------------------
+    def gather(self, params):
+        out = Displayer()
+        if params.url is not None:
+            self.target = params.url
+        else:
+            self.target = str(input("url: "))
+        originalreq = dorequest(self.target, params)
+        m = re.search(b"(charset=(?P<value>.*)\")", originalreq['body'])
+        if m:
+            self.charset = m.group('value').decode()
+        self.originalreq_lines = [x.decode(self.charset) for x in originalreq['body'].splitlines()]
+        self.originalhead = originalreq['head']
+        out.display(originalreq['head'])
+        self.originalsess = getsess(originalreq['head'])
+        self.parsedurl = urlparse(self.target)
+        self.parametros = self.parsedurl.query.split('&')
+
+    # ---------------------------------------------------------------------
+    def show(self):
+        out = Displayer()
+        out.display("target: %s" % str(self.target))
+        out.display("originalreq_lines: %s" % str(self.originalreq_lines))
+        out.display("originalhead: %s" % str(self.originalhead))
+        out.display("originalsess: %s" % str(self.originalsess))
+        out.display("parsedurl: %s" % str(self.parsedurl))
+        out.display("parametros: %s" % str(self.parametros))
+        out.display("charset: %s" % str(self.charset))
+
+    # ---------------------------------------------------------------------
+    def __init__(self):
+        if not self.__initialized:
+            self.__initialized = True
+            self.target = None
+            self.originalreq_lines = []
+            self.originalhead = None
+            self.originalsess = None
+            self.parsedurl = None
+            self.parametros = []
+            self.charset = 'utf-8'
