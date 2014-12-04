@@ -198,6 +198,7 @@ class Parameters:
         self.tor = kwargs.get("tor")
         self.checkip = kwargs.get("checkip")
         self.agent = kwargs.get("agent")
+        self.file = kwargs.get("file")
 
 
 # -------------------------------------------------------------------------
